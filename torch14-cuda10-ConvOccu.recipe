@@ -1,0 +1,55 @@
+#header
+Bootstrap: docker
+From: pytorch/pytorch:1.4-cuda10.1-cudnn7-devel
+
+#Sections
+
+%help
+Singularity image of the pytorch:1.4-cuda10.1-cudnn7-runtime docker container.
+OS: Ubuntu 16.04.5 LTS
+Cuda: 10.1
+Pytorch-gpu 1.4
+Python: 3.5
+
+%setup
+# commands ecexuted on the host system after os has been installed
+
+%files
+# copy files from the host system here
+install_convoccupancy.sh
+# use de repository servers since the official ones are not working in the moment  de.archive.ubuntu.com
+
+
+%labels
+# information labels about the container  saved in /.singularity.d/labels.json
+  maintainer Maximus Mutschler <maximus.mutschler@uni-tuebingen.de>
+  Version v0.1
+# overwrite  True= to be able to build it multiple times
+  overwrite False 
+  pytorch.version 1.4
+  python.version 3.5
+
+%environment
+# set environment variables
+
+
+
+
+%post
+#commands executed inside the container after os has been installed. Used for setup of the container
+#devine env variables for build time
+#pip install torch-scatter==2.0.4 -f https://pytorch-geometric.com/whl/torch-1.4.0+cu101.html
+#pip install Cython
+#./install_convoccupancy.sh
+%runscript
+# commands that are run when container's run command is used
+
+
+
+%test
+# validate setup at the end of the build process
+
+
+
+
+#/usr/lib/x86_64-linux-gnu/libcuda.so.1
