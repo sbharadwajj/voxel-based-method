@@ -18,8 +18,8 @@ def resample_pcd(pcd, n):
 class Kitti360(data.Dataset): 
     def __init__(self, cfg, train = True, npoints = 8192):
         if train:
-            self.inp = cfg['data']['train_split'] 
-            self.gt =  cfg['data']['train_split']
+            self.inp = os.path.join(cfg['data']['train_split'], "partial")
+            self.gt =  os.path.join(cfg['data']['train_split'], "complete")
             # self.X = np.asarray(os.listdir(self.inp))
             # Y_ = np.asarray(os.listdir(self.gt))
             self.len = 1
@@ -52,12 +52,10 @@ class Kitti360(data.Dataset):
         return voxel.astype(float)
 
     def __getitem__(self, index):
-        # if self.train:
-        #     model_id = self.X[index]  
-        # else:
-        #     model_id = self.X_val[index]  
-        model_id = "400_voxel.ply"
-        model_id_inp = "400.dat"    
+        if self.train:
+            model_id = self.X[index]  
+        else:
+            model_id = self.X_val[index]    
 
         # print(os.path.join(self.inp, model_id))
 
