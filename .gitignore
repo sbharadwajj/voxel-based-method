@@ -128,4 +128,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-convolutional_occupancy_network/job_files
+src/job_files
+src/build
+src/out
