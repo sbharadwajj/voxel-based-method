@@ -97,8 +97,9 @@ model = config.get_model(cfg, device=device, dataset=train_dataset)
 generator = config.get_generator(model, cfg, device=device)
 
 # Intialize training
-optimizer = optim.Adam(model.parameters(), lr=1e-4)
-# optimizer = optim.SGD(model.parameters(), lr=1e-4, momentum=0.9)
+optimizer = optim.Adam(model.parameters(), lr=1e-2)
+# optimizer = optim.SGD(model.parameters(), lr=1e-2, momentum=0.9)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
 trainer = config.get_trainer(model, optimizer, cfg, device=device)
 
 checkpoint_io = CheckpointIO(out_dir, model=model, optimizer=optimizer)
@@ -142,7 +143,7 @@ for epoch in range(50):
         if print_every > 0 and (it % print_every) == 0:
             t = datetime.datetime.now()
             print('[Epoch %02d] it=%03d, loss=%.4f, time: %.2fs, %02d:%02d'
-                     % (epoch_it, it, loss, time.time() - t0, t.hour, t.minute))
+                     % (epoch, it, loss, time.time() - t0, t.hour, t.minute))
 
         # # Visualize output
         # if visualize_every > 0 and (it % visualize_every) == 0:
@@ -191,5 +192,6 @@ for epoch in range(50):
         # # Exit if necessary
         # if exit_after > 0 and (time.time() - t0) >= exit_after:
         #     print('Time limit reached. Exiting.')
-        checkpoint_io.save('model.pt', epoch_it=epoch)
+    checkpoint_io.save(str(epoch)+'model.pt', epoch_it=epoch)
+    # scheduler.step()
         #     exit(3)

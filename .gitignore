@@ -131,3 +131,4 @@ dmypy.json
 src/job_files
 src/build
 src/out
+src/400-data.npz

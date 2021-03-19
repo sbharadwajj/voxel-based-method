@@ -64,7 +64,7 @@ train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=batch_size, num_workers=cfg['training']['n_workers'], shuffle=True)
 
 val_loader = torch.utils.data.DataLoader(
-        val_dataset, batch_size=1, num_workers=cfg['training']['n_workers_val'], shuffle=False)
+        val_dataset, batch_size=8, num_workers=cfg['training']['n_workers_val'], shuffle=False)
 
 # # For visualizations
 # vis_loader = torch.utils.data.DataLoader(
@@ -103,7 +103,7 @@ trainer = config.get_trainer(model, optimizer, cfg, device=device)
 
 checkpoint_io = CheckpointIO(out_dir, model=model, optimizer=optimizer)
 try:
-    load_dict = checkpoint_io.load('model.pt')
+    load_dict = checkpoint_io.load('2model.pt')
 except FileExistsError:
     load_dict = dict()
 epoch_it = load_dict.get('epoch_it', 0)
@@ -131,14 +131,14 @@ print('output path: ', cfg['training']['out_dir'])
 for epoch in range(1):
     #TRAIN MODE
 
-    for i, batch in enumerate(val_loader, 0):
+    for i, batch in enumerate(train_loader, 0):
         optimizer.zero_grad()
         id, input, gt = batch
 
         logits, loss = trainer.val_step(batch)
         logger.add_scalar('train/loss', loss, it)
         
-        np.savez("400-data.npz", pred=logits.numpy(), inp=input, gt=gt)
+        np.savez(os.path.join(out_dir, "train_data" , str(i)+"data.npz"), pred=logits.numpy(), inp=input, gt=gt)
         # Print output
         if print_every > 0 and (it % print_every) == 0:
             t = datetime.datetime.now()
