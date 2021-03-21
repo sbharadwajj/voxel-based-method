@@ -6,7 +6,6 @@ import torchvision.transforms as transforms
 import os
 import random
 #from utils import *
-import pandas as pd
 from pyntcloud import PyntCloud
 
 def resample_pcd(pcd, n):
@@ -19,15 +18,15 @@ def resample_pcd(pcd, n):
 class Kitti360(data.Dataset): 
     def __init__(self, cfg, train = True, npoints = 8192):
         if train:
-            self.inp = os.path.join(cfg['data']['train_split'], "downsampled_inp/downsampled_train/")
-            self.gt =  os.path.join(cfg['data']['train_split'], "downsampled_fused/downsampled_train/")
+            self.inp = os.path.join(cfg['data']['train_split'], "partial")
+            self.gt =  os.path.join(cfg['data']['train_split'], "complete")
             self.X = np.asarray(os.listdir(self.inp))
             self.Y = np.asarray(os.listdir(self.gt))
             self.len = np.shape(self.Y)[0]
 
         else:
-            self.inp_val = os.path.join(cfg['data']['val_split'], "downsampled_inp/downsampled_predict/") 
-            self.gt_val = os.path.join(cfg['data']['val_split'] , "downsampled_fused/downsampled_predict/")
+            self.inp_val = os.path.join(cfg['data']['val_split'], "partial") 
+            self.gt_val = os.path.join(cfg['data']['val_split'] , "complete")
             self.X_val = np.asarray(os.listdir(self.inp_val))
             self.Y_val = np.asarray(os.listdir(self.gt_val))
             self.len = np.shape(self.Y_val)[0]
@@ -35,29 +34,15 @@ class Kitti360(data.Dataset):
         self.train = train
         self.pose = '/home/bharadwaj/implementations/DATA/poses.txt'
         self.pose_matrix = np.loadtxt(self.pose)
-    
-    def voxelize(self, path, x, y, z):
-        point_set = np.loadtxt(path)
-        point_dict = {'x':point_set[:,0], 'y':point_set[:,1],'z':point_set[:,2]}
-        cloud = PyntCloud(pd.DataFrame(data=point_dict))
-        voxelgrid_id = cloud.add_structure("voxelgrid", n_x=x, n_y=y, n_z=z, regular_bounding_box=False)
-        voxelgrid = cloud.structures[voxelgrid_id]
-
-        x_cords = voxelgrid.voxel_x
-        y_cords = voxelgrid.voxel_y
-        z_cords = voxelgrid.voxel_z
-
-        voxel = np.zeros((x, y, z)).astype(np.bool)
-
-        for x, y, z in zip(x_cords, y_cords, z_cords):
-            voxel[x][y][z] = True
-        return voxel.astype(float)
 
     def __getitem__(self, index):
         if self.train:
-            model_id = self.Y[index] 
+            model_id = self.Y[index]  
         else:
-            model_id = self.Y_val[index]
+            model_id = self.Y_val[index]    
+
+        model_id_inp = "400" + ".dat"
+        # print(os.path.join(self.inp, model_id))
 
         def trans_vector(model_id, poses):
             '''
@@ -78,13 +63,13 @@ class Kitti360(data.Dataset):
             pcd = point_set / dist #scale
             return (torch.from_numpy(np.array(pcd)).float())
         
-        center = trans_vector(model_id, self.pose_matrix).transpose()
+        center = trans_vector(model_id_inp, self.pose_matrix).transpose()
         if self.train:
-            partial = read_pcd(os.path.join(self.inp, model_id), center)
-            voxel_complete = self.voxelize((os.path.join(self.gt, model_id)), 64, 64, 16)
+            partial =read_pcd(os.path.join(self.inp, model_id_inp), center)
+            voxel_complete = np.load((os.path.join(self.gt, "voxel_semantic_400.npy"))).astype(np.float)
         else:
-            partial =read_pcd(os.path.join(self.inp_val, model_id), center)
-            voxel_complete = self.voxelize((os.path.join(self.gt_val, model_id)), 64, 64, 16) 
+            partial =read_pcd(os.path.join(self.inp_val, model_id_inp), center)
+            voxel_complete = np.load((os.path.join(self.gt_val, "voxel_semantic_400.npy"))).astype(np.float)       
         return model_id, resample_pcd(partial, 1024), voxel_complete
 
     def __len__(self):
