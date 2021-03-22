@@ -104,7 +104,7 @@ trainer = config.get_trainer(model, optimizer, cfg, device=device)
 
 checkpoint_io = CheckpointIO(out_dir, model=model, optimizer=optimizer)
 try:
-    load_dict = checkpoint_io.load('model.pt')
+    load_dict = checkpoint_io.load('149model.pt')
 except FileExistsError:
     load_dict = dict()
 epoch_it = load_dict.get('epoch_it', 0)
@@ -129,7 +129,7 @@ nparameters = sum(p.numel() for p in model.parameters())
 print('Total number of parameters: %d' % nparameters)
 
 print('output path: ', cfg['training']['out_dir'])
-for epoch in range(50):
+for epoch in range(150):
     #TRAIN MODE
 
     for i, batch in enumerate(train_loader, 0):

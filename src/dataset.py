@@ -66,10 +66,10 @@ class Kitti360(data.Dataset):
         center = trans_vector(model_id_inp, self.pose_matrix).transpose()
         if self.train:
             partial =read_pcd(os.path.join(self.inp, model_id_inp), center)
-            voxel_complete = np.load((os.path.join(self.gt, "voxel_semantic_400.npy"))).astype(np.float)
+            voxel_complete = np.load((os.path.join(self.gt, "voxel_semantic_400.npy")))
         else:
             partial =read_pcd(os.path.join(self.inp_val, model_id_inp), center)
-            voxel_complete = np.load((os.path.join(self.gt_val, "voxel_semantic_400.npy"))).astype(np.float)       
+            voxel_complete = np.load((os.path.join(self.gt_val, "voxel_semantic_400.npy")))       
         return model_id, resample_pcd(partial, 1024), voxel_complete
 
     def __len__(self):

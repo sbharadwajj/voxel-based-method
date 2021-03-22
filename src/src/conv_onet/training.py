@@ -54,10 +54,10 @@ class Trainer(BaseTrainer):
         self.model.eval()
         device = self.device
         partial_cloud = data[1].to(device)
-        complete_voxel = data[2].to(device)
+        complete_voxel = data[2].reshape(-1,64, 64, 16).long().to(device)
         with torch.no_grad():
             logits = torch.squeeze(self.model.encode_inputs(partial_cloud), dim=1)
-        loss_i = F.binary_cross_entropy_with_logits(
+        loss_i = F.cross_entropy(
             logits, complete_voxel, reduction='none')
         loss = loss_i.sum(-1).mean()
         return F.sigmoid(logits), loss
@@ -132,11 +132,10 @@ class Trainer(BaseTrainer):
         '''
         device = self.device
         partial_cloud = data[1].to(device)
-        complete_voxel = data[2].to(device)
+        complete_voxel = data[2].reshape(-1,64, 64, 16).long().to(device)
         
         logits = torch.squeeze(self.model.encode_inputs(partial_cloud), dim=1)
-        
-        loss_i = F.binary_cross_entropy_with_logits(
+        loss_i = F.cross_entropy(
             logits, complete_voxel, reduction='none')
         loss = loss_i.sum(-1).mean()
 
