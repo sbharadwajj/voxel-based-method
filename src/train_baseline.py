@@ -11,7 +11,7 @@ from src.checkpoints import CheckpointIO
 from collections import defaultdict
 import shutil
 from torchsummary import summary
-from dataset import *
+from dataset_10_samples import *
 
 
 # Arguments
@@ -92,19 +92,19 @@ val_loader = torch.utils.data.DataLoader(
 
 # Model
 model = config.get_model(cfg, device=device, dataset=train_dataset)
-
+import pdb;pdb.set_trace()
 # Generator
 generator = config.get_generator(model, cfg, device=device)
 
 # Intialize training
-optimizer = optim.Adam(model.parameters(), lr=1e-2)
+optimizer = optim.Adam(model.parameters(), lr=1e-3)
 # optimizer = optim.SGD(model.parameters(), lr=1e-2, momentum=0.9)
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
+# scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
 trainer = config.get_trainer(model, optimizer, cfg, device=device)
 
 checkpoint_io = CheckpointIO(out_dir, model=model, optimizer=optimizer)
 try:
-    load_dict = checkpoint_io.load('model.pt')
+    load_dict = checkpoint_io.load('48model.pt')
 except FileExistsError:
     load_dict = dict()
 epoch_it = load_dict.get('epoch_it', 0)

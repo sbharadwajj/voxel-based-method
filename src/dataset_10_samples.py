@@ -53,11 +53,11 @@ class Kitti360(data.Dataset):
 
     def __getitem__(self, index):
         if self.train:
-            model_id = self.Y[index]  
+            model_id = self.Y[index]
         else:
             model_id = self.Y_val[index]    
 
-        model_id_inp = "400" + ".dat"
+        model_id_inp = model_id.split("_")[0] + ".dat"
         # print(os.path.join(self.inp, model_id))
 
         def trans_vector(model_id, poses):
@@ -82,10 +82,10 @@ class Kitti360(data.Dataset):
         center = trans_vector(model_id_inp, self.pose_matrix).transpose()
         if self.train:
             partial =read_pcd(os.path.join(self.inp, model_id_inp), center)
-            voxel_complete = np.load((os.path.join(self.gt, "voxel_cropped_400.npy"))).astype(np.float)
+            voxel_complete = self.voxelize((os.path.join(self.gt, model_id)), 64, 64, 16)
         else:
             partial =read_pcd(os.path.join(self.inp_val, model_id_inp), center)
-            voxel_complete = np.load((os.path.join(self.gt_val, "voxel_cropped_400.npy"))).astype(np.float)       
+            voxel_complete = self.voxelize((os.path.join(self.gt, model_id)), 64, 64, 16)    
         return model_id, resample_pcd(partial, 1024), voxel_complete
 
     def __len__(self):
