@@ -8,9 +8,9 @@ data:
   pointcloud_n: 1024
   pointcloud_noise: 0.005
   points_subsample: 2048
-  train_split: /home/bharadwaj/implementations/DATA/train
-  val_split: /home/bharadwaj/implementations/DATA/val
-  test_split: /home/bharadwaj/implementations/DATA/val
+  train_split: /home/bharadwaj/implementations/DATA/voxel_5
+  val_split: /home/bharadwaj/implementations/DATA/voxel_5
+  test_split: /home/bharadwaj/implementations/DATA/voxel_5
 model:
   encoder: pointnet_local_pool
   encoder_kwargs:
@@ -26,8 +26,8 @@ model:
   decoder: None
   c_dim: 64
 training:
-  out_dir:  out/voxels/semantic-single
-  batch_size: 8
+  out_dir:  out/voxels/semantic-5-voxels-1000
+  batch_size: 4
   model_selection_metric: iou
   model_selection_mode: maximize
   print_every: 100

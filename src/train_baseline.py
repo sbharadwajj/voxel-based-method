@@ -11,7 +11,7 @@ from src.checkpoints import CheckpointIO
 from collections import defaultdict
 import shutil
 from torchsummary import summary
-from dataset import *
+from dataset_10_samples import *
 
 
 # Arguments
@@ -97,7 +97,7 @@ model = config.get_model(cfg, device=device, dataset=train_dataset)
 generator = config.get_generator(model, cfg, device=device)
 
 # Intialize training
-optimizer = optim.Adam(model.parameters(), lr=1e-2)
+optimizer = optim.Adam(model.parameters(), lr=1e-4)
 # optimizer = optim.SGD(model.parameters(), lr=1e-2, momentum=0.9)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
 trainer = config.get_trainer(model, optimizer, cfg, device=device)
@@ -129,13 +129,12 @@ nparameters = sum(p.numel() for p in model.parameters())
 print('Total number of parameters: %d' % nparameters)
 
 print('output path: ', cfg['training']['out_dir'])
-for epoch in range(150):
+for epoch in range(1000):
     #TRAIN MODE
 
     for i, batch in enumerate(train_loader, 0):
         optimizer.zero_grad()
         id, input, gt = batch
-
         loss = trainer.train_step(batch)
         logger.add_scalar('train/loss', loss, it)
 

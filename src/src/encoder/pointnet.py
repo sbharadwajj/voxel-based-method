@@ -64,7 +64,7 @@ class LocalPoolPointnet(nn.Module):
             self.scatter = scatter_mean
         else:
             raise ValueError('incorrect scatter type')
-        self.conv_out = nn.Conv3d(64, 12, 1)
+        self.conv_out = nn.Conv3d(64, 21, 1)
 
     def generate_plane_features(self, p, c, plane='xz'):
         # acquire indices of features in plane
