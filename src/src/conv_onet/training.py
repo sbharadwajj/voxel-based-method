@@ -60,7 +60,7 @@ class Trainer(BaseTrainer):
         loss_i = F.binary_cross_entropy_with_logits(
             logits, complete_voxel, reduction='none')
         loss = loss_i.sum(-1).mean()
-        return F.sigmoid(logits), loss
+        return logits, loss
     
     def eval_step(self, data):
         ''' Performs an evaluation step.

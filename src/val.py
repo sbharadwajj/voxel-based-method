@@ -7,7 +7,7 @@ import argparse
 import time, datetime
 import matplotlib; matplotlib.use('Agg')
 from src import config, data
-from src.checkpoints import CheckpointIO
+from src.checkpoints_val import CheckpointIO
 from collections import defaultdict
 import shutil
 from torchsummary import summary
@@ -57,14 +57,12 @@ shutil.copyfile(args.config, os.path.join(out_dir, 'config.yaml'))
 # train_dataset = config.get_dataset('train', cfg)
 # val_dataset = config.get_dataset('val', cfg, return_idx=True)
 
-train_dataset = Kitti360(cfg, train=True, npoints=cfg['data']['pointcloud_n'])
-val_dataset = Kitti360(cfg, train=False, npoints=cfg['data']['pointcloud_n'])
-
-train_loader = torch.utils.data.DataLoader(
-    train_dataset, batch_size=batch_size, num_workers=cfg['training']['n_workers'], shuffle=True)
-
-val_loader = torch.utils.data.DataLoader(
-        val_dataset, batch_size=8, num_workers=cfg['training']['n_workers_val'], shuffle=False)
+train_dataset = Kitti360(dataset_path="/home/bharadwaj/dataset/scripts/4096-8192-kitti360/", train=True, weights=False , npoints_partial = 4096, npoints=8192)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=4,
+                                        shuffle=True, num_workers=8, drop_last=True)
+val_dataset = Kitti360("/home/bharadwaj/dataset/scripts/4096-8192-kitti360/", train=False, weights=False, npoints_partial = 4096, npoints=8192)
+val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=4,
+                                        shuffle=False, num_workers=8, drop_last=True)
 
 # # For visualizations
 # vis_loader = torch.utils.data.DataLoader(
@@ -103,7 +101,7 @@ trainer = config.get_trainer(model, optimizer, cfg, device=device)
 
 checkpoint_io = CheckpointIO(out_dir, model=model, optimizer=optimizer)
 try:
-    load_dict = checkpoint_io.load('2model.pt')
+    load_dict = checkpoint_io.load('90model.pt')
 except FileExistsError:
     load_dict = dict()
 epoch_it = load_dict.get('epoch_it', 0)
@@ -131,14 +129,17 @@ print('output path: ', cfg['training']['out_dir'])
 for epoch in range(1):
     #TRAIN MODE
 
-    for i, batch in enumerate(train_loader, 0):
+    for i, batch in enumerate(val_loader, 0):
         optimizer.zero_grad()
         id, input, gt = batch
 
         logits, loss = trainer.val_step(batch)
         logger.add_scalar('train/loss', loss, it)
         
-        np.savez(os.path.join(out_dir, "train_data" , str(i)+"data.npz"), pred=logits.numpy(), inp=input, gt=gt)
+        if device == "cuda":
+            np.savez(os.path.join(out_dir, "epoch_90" ,str(i)+"VAL_DATA-val.npz"), pred=logits.detach().cpu().numpy(), inp=input, gt=gt)
+        else:
+            np.savez(os.path.join(out_dir, "epoch_90" ,str(i)+"VAL_DATA-val.npz"), pred=logits.detach().cpu().numpy(), inp=input, gt=gt)
         # Print output
         if print_every > 0 and (it % print_every) == 0:
             t = datetime.datetime.now()

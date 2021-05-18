@@ -46,7 +46,7 @@
 #cnn_minst.py <model save path> <mnist data path>
 ####
 
-singularity exec /home/bharadwaj/envi/torch14-cuda10-ConvOccu.simg python train_baseline.py /home/bharadwaj/implementations/convONw-baseline2/baseline-exp1.yaml
+singularity exec /home/bharadwaj/envi/torch14-cuda10-ConvOccu.simg python val.py /home/bharadwaj/implementations/convONw-baseline2/baseline-exp1.yaml
 # singularity exec /home/bharadwaj/envi/test2.simg make
 # singularity exec /home/bharadwaj/envi/test2.simg python2.7 /home/bharadwaj/implementations/PointSetGeneration/depthestimate/train_nn.py [data=/home/bharadwaj/implementations/PointSetGeneration/data/] [dump=dump/] [num=3] predict
 

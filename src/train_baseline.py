@@ -57,14 +57,21 @@ shutil.copyfile(args.config, os.path.join(out_dir, 'config.yaml'))
 # train_dataset = config.get_dataset('train', cfg)
 # val_dataset = config.get_dataset('val', cfg, return_idx=True)
 
-train_dataset = Kitti360(cfg, train=True, npoints=cfg['data']['pointcloud_n'])
-val_dataset = Kitti360(cfg, train=False, npoints=cfg['data']['pointcloud_n'])
+# train_dataset = Kitti360(cfg, train=True, npoints=cfg['data']['pointcloud_n'])
+# val_dataset = Kitti360(cfg, train=False, npoints=cfg['data']['pointcloud_n'])
 
-train_loader = torch.utils.data.DataLoader(
-    train_dataset, batch_size=batch_size, num_workers=cfg['training']['n_workers'], shuffle=True)
+# train_loader = torch.utils.data.DataLoader(
+#     train_dataset, batch_size=batch_size, num_workers=cfg['training']['n_workers'], shuffle=True)
 
-val_loader = torch.utils.data.DataLoader(
-        val_dataset, batch_size=1, num_workers=cfg['training']['n_workers_val'], shuffle=False)
+# val_loader = torch.utils.data.DataLoader(
+#         val_dataset, batch_size=1, num_workers=cfg['training']['n_workers_val'], shuffle=False)
+
+train_dataset = Kitti360(dataset_path="/home/bharadwaj/dataset/scripts/4096-8192-kitti360/", train=True, weights=False , npoints_partial = 4096, npoints=8192)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=4,
+                                        shuffle=True, num_workers=8, drop_last=True)
+val_dataset = Kitti360("/home/bharadwaj/dataset/scripts/4096-8192-kitti360/", train=False, weights=False, npoints_partial = 4096, npoints=8192)
+val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=4,
+                                        shuffle=False, num_workers=8, drop_last=True)
 
 # # For visualizations
 # vis_loader = torch.utils.data.DataLoader(
@@ -97,14 +104,14 @@ model = config.get_model(cfg, device=device, dataset=train_dataset)
 generator = config.get_generator(model, cfg, device=device)
 
 # Intialize training
-optimizer = optim.Adam(model.parameters(), lr=1e-2)
+optimizer = optim.Adam(model.parameters(), lr=1e-5)
 # optimizer = optim.SGD(model.parameters(), lr=1e-2, momentum=0.9)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
 trainer = config.get_trainer(model, optimizer, cfg, device=device)
 
 checkpoint_io = CheckpointIO(out_dir, model=model, optimizer=optimizer)
 try:
-    load_dict = checkpoint_io.load('model.pt')
+    load_dict = checkpoint_io.load('30model.pt') # LOAD MODEL HERE
 except FileExistsError:
     load_dict = dict()
 epoch_it = load_dict.get('epoch_it', 0)
@@ -129,16 +136,17 @@ nparameters = sum(p.numel() for p in model.parameters())
 print('Total number of parameters: %d' % nparameters)
 
 print('output path: ', cfg['training']['out_dir'])
-for epoch in range(50):
+for epoch in range(60, 200):
     #TRAIN MODE
 
-    for i, batch in enumerate(train_loader, 0):
+    for it, batch in enumerate(train_loader, 0):
         optimizer.zero_grad()
         id, input, gt = batch
 
         loss = trainer.train_step(batch)
         logger.add_scalar('train/loss', loss, it)
 
+        # print("check")
         # Print output
         if print_every > 0 and (it % print_every) == 0:
             t = datetime.datetime.now()
@@ -192,6 +200,7 @@ for epoch in range(50):
         # # Exit if necessary
         # if exit_after > 0 and (time.time() - t0) >= exit_after:
         #     print('Time limit reached. Exiting.')
-    checkpoint_io.save(str(epoch)+'model.pt', epoch_it=epoch)
+    if epoch % 5 == 0:
+        checkpoint_io.save(str(epoch)+'model.pt', epoch_it=epoch)
     # scheduler.step()
         #     exit(3)
