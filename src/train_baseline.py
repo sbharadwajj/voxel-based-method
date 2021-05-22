@@ -104,14 +104,14 @@ model = config.get_model(cfg, device=device, dataset=train_dataset)
 generator = config.get_generator(model, cfg, device=device)
 
 # Intialize training
-optimizer = optim.Adam(model.parameters(), lr=1e-5)
+optimizer = optim.Adam(model.parameters(), lr=1e-4)
 # optimizer = optim.SGD(model.parameters(), lr=1e-2, momentum=0.9)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
 trainer = config.get_trainer(model, optimizer, cfg, device=device)
 
 checkpoint_io = CheckpointIO(out_dir, model=model, optimizer=optimizer)
 try:
-    load_dict = checkpoint_io.load('30model.pt') # LOAD MODEL HERE
+    load_dict = checkpoint_io.load('model.pt') # LOAD MODEL HERE
 except FileExistsError:
     load_dict = dict()
 epoch_it = load_dict.get('epoch_it', 0)
@@ -136,7 +136,7 @@ nparameters = sum(p.numel() for p in model.parameters())
 print('Total number of parameters: %d' % nparameters)
 
 print('output path: ', cfg['training']['out_dir'])
-for epoch in range(60, 200):
+for epoch in range(0, 200):
     #TRAIN MODE
 
     for it, batch in enumerate(train_loader, 0):
@@ -201,6 +201,6 @@ for epoch in range(60, 200):
         # if exit_after > 0 and (time.time() - t0) >= exit_after:
         #     print('Time limit reached. Exiting.')
     if epoch % 5 == 0:
-        checkpoint_io.save(str(epoch)+'model.pt', epoch_it=epoch)
+        checkpoint_io.save(str(epoch)+'model.pt', epoch_it=epoch, it=it)
     # scheduler.step()
         #     exit(3)

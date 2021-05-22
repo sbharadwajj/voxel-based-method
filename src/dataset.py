@@ -9,6 +9,8 @@ import random
 import pandas as pd
 from pyntcloud import PyntCloud
 
+from data_utils import *
+
 def resample_pcd(pcd, n):
     """Drop or duplicate points so that pcd has exactly n points"""
     idx = np.random.permutation(pcd.shape[0])
@@ -172,8 +174,8 @@ class Kitti360(data.Dataset):
         partial = self.read_pcd(os.path.join(self.inp, model_id), center)
         complete = self.read_pcd(os.path.join(self.gt, model_id), center)  
 
-        # if self.train:
-        #     complete, partial = augment_cloud([complete, partial])          
+        if self.train:
+            complete, partial = augment_cloud([complete, partial])          
         return model_id, partial.astype(np.float32), self.voxelize(complete.astype(np.float32), 64, 64, 16)
 
     def __len__(self):
