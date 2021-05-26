@@ -30,6 +30,7 @@ is_cuda = (torch.cuda.is_available() and not args.no_cuda)
 device = torch.device("cuda" if is_cuda else "cpu")
 # Set t0
 t0 = time.time()
+print(device)
 
 # Shorthands
 out_dir = cfg['training']['out_dir']
@@ -53,11 +54,11 @@ if not os.path.exists(out_dir):
 
 shutil.copyfile(args.config, os.path.join(out_dir, 'config.yaml'))
 
-train_dataset = Kitti360(dataset_path="/home/bharadwaj/dataset/scripts/4096-8192-kitti360-semantic/", train=True, weights=False , npoints_partial = 4096, npoints=8192)
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=4,
+train_dataset = Kitti360(dataset_path="/home/sbharadwaj/dataset/4096-8192-kitti360-semantic/", train=True, weights=False , npoints_partial = 4096, npoints=8192)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=8,
                                         shuffle=True, num_workers=8, drop_last=True)
-val_dataset = Kitti360("/home/bharadwaj/dataset/scripts/4096-8192-kitti360-semantic/", train=False, weights=False, npoints_partial = 4096, npoints=8192)
-val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=4,
+val_dataset = Kitti360("/home/sbharadwaj/dataset/4096-8192-kitti360-semantic/", train=False, weights=False, npoints_partial = 4096, npoints=8192)
+val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=8,
                                         shuffle=False, num_workers=8, drop_last=True)
 
 
@@ -99,7 +100,7 @@ trainer = config.get_trainer(model, optimizer, cfg, device=device)
 
 checkpoint_io = CheckpointIO(out_dir, model=model, optimizer=optimizer)
 try:
-    load_dict = checkpoint_io.load('149model.pt')
+    load_dict = checkpoint_io.load('model.pt')
 except FileExistsError:
     load_dict = dict()
 epoch_it = load_dict.get('epoch_it', 0)
@@ -138,7 +139,7 @@ for epoch in range(150):
             t = datetime.datetime.now()
             print('[Epoch %02d] it=%03d, loss=%.4f, time: %.2fs, %02d:%02d'
                      % (epoch, it, loss, time.time() - t0, t.hour, t.minute))
-
+        it+=1
         # # Visualize output
         # if visualize_every > 0 and (it % visualize_every) == 0:
         #     print('Visualizing')
@@ -186,7 +187,7 @@ for epoch in range(150):
         # # Exit if necessary
         # if exit_after > 0 and (time.time() - t0) >= exit_after:
         #     print('Time limit reached. Exiting.')
-        it+=1
+
     checkpoint_io.save(str(epoch)+'model.pt', epoch_it=epoch)
     # scheduler.step()
         #     exit(3)

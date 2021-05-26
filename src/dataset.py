@@ -24,7 +24,7 @@ class Kitti360(data.Dataset):
         self.npoints = npoints
         self.weights = weights
         if self.train:
-            self.inp = os.path.join("/home/bharadwaj/dataset/scripts/4096-8192-kitti360", "train", "partial")
+            self.inp = os.path.join("/home/sbharadwaj/dataset/4096-8192-kitti360", "train", "partial")
             self.gt = os.path.join(dataset_path, "train", "gt")
             self.X = os.listdir(self.inp)
             self.Y = os.listdir(self.gt)
@@ -33,15 +33,15 @@ class Kitti360(data.Dataset):
             self.len = len(self.X)
             print(self.len)
         else:
-            self.inp = os.path.join("/home/bharadwaj/dataset/scripts/4096-8192-kitti360", "val", "partial")
-            self.gt = os.path.join(dataset_path, "val", "gt")
+            self.inp = os.path.join("/home/sbharadwaj/dataset/4096-8192-kitti360", "train", "partial")
+            self.gt = os.path.join(dataset_path, "train", "gt") #TRAIN FOR NOW
             self.X = os.listdir(self.inp)
             self.Y = os.listdir(self.gt)
 
-            sort_x = sorted(self.X)[0::20] # choose the 100th one
+            sort_x = sorted(self.X)[0::2000] # choose the 100th one
             self.X = sort_x
 
-            self.len = len(self.Y)
+            self.len = len(self.X)
             print(self.len)
 
         # print(self.inp)
@@ -49,10 +49,10 @@ class Kitti360(data.Dataset):
         '''
         loads poses to a dictonary to read
         '''
-        self.pose = '/home/bharadwaj/dataset/KITTI-360/data_poses'
+        self.pose = '/home/sbharadwaj/dataset/data_poses'
         pose_dict = {}
         poses = os.listdir(self.pose)
-        pose_folders = [os.path.join('/home/bharadwaj/dataset/KITTI-360/data_poses', folder) for folder in poses]
+        pose_folders = [os.path.join('/home/sbharadwaj/dataset/data_poses', folder) for folder in poses]
         self.pose_dict = {path.split("/")[-1]:np.loadtxt(path+"/poses.txt") for path in pose_folders}
 
     def get_translation_vec(self, model_id, poses):
