@@ -11,7 +11,7 @@ from src.checkpoints import CheckpointIO
 from collections import defaultdict
 import shutil
 from torchsummary import summary
-from dataset_10_samples import *
+from dataset import *
 
 
 # Arguments
@@ -53,18 +53,13 @@ if not os.path.exists(out_dir):
 
 shutil.copyfile(args.config, os.path.join(out_dir, 'config.yaml'))
 
-# Dataset
-# train_dataset = config.get_dataset('train', cfg)
-# val_dataset = config.get_dataset('val', cfg, return_idx=True)
+train_dataset = Kitti360(dataset_path="/home/bharadwaj/dataset/scripts/4096-8192-kitti360-semantic/", train=True, weights=False , npoints_partial = 4096, npoints=8192)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=4,
+                                        shuffle=True, num_workers=8, drop_last=True)
+val_dataset = Kitti360("/home/bharadwaj/dataset/scripts/4096-8192-kitti360-semantic/", train=False, weights=False, npoints_partial = 4096, npoints=8192)
+val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=4,
+                                        shuffle=False, num_workers=8, drop_last=True)
 
-train_dataset = Kitti360(cfg, train=True, npoints=cfg['data']['pointcloud_n'])
-val_dataset = Kitti360(cfg, train=False, npoints=cfg['data']['pointcloud_n'])
-
-train_loader = torch.utils.data.DataLoader(
-    train_dataset, batch_size=batch_size, num_workers=cfg['training']['n_workers'], shuffle=True)
-
-val_loader = torch.utils.data.DataLoader(
-        val_dataset, batch_size=1, num_workers=cfg['training']['n_workers_val'], shuffle=False)
 
 # # For visualizations
 # vis_loader = torch.utils.data.DataLoader(
@@ -129,7 +124,7 @@ nparameters = sum(p.numel() for p in model.parameters())
 print('Total number of parameters: %d' % nparameters)
 
 print('output path: ', cfg['training']['out_dir'])
-for epoch in range(1000):
+for epoch in range(150):
     #TRAIN MODE
 
     for i, batch in enumerate(train_loader, 0):
@@ -191,6 +186,7 @@ for epoch in range(1000):
         # # Exit if necessary
         # if exit_after > 0 and (time.time() - t0) >= exit_after:
         #     print('Time limit reached. Exiting.')
+        it+=1
     checkpoint_io.save(str(epoch)+'model.pt', epoch_it=epoch)
     # scheduler.step()
         #     exit(3)

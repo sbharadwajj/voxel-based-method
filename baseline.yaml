@@ -26,7 +26,7 @@ model:
   decoder: None
   c_dim: 64
 training:
-  out_dir:  out/voxels/semantic-5-voxels-1000
+  out_dir:  out/voxels/semantic-voxel
   batch_size: 4
   model_selection_metric: iou
   model_selection_mode: maximize
