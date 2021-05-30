@@ -66,11 +66,11 @@ shutil.copyfile(args.config, os.path.join(out_dir, 'config.yaml'))
 # val_loader = torch.utils.data.DataLoader(
 #         val_dataset, batch_size=1, num_workers=cfg['training']['n_workers_val'], shuffle=False)
 
-train_dataset = Kitti360(dataset_path="/home/bharadwaj/dataset/scripts/4096-8192-kitti360/", train=True, weights=False , npoints_partial = 4096, npoints=8192)
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=4,
+train_dataset = Kitti360(dataset_path="/home/sbharadwaj/dataset/4096-8192-kitti360/", train=True, weights=False , npoints_partial = 4096, npoints=8192)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=8,
                                         shuffle=True, num_workers=8, drop_last=True)
-val_dataset = Kitti360("/home/bharadwaj/dataset/scripts/4096-8192-kitti360/", train=False, weights=False, npoints_partial = 4096, npoints=8192)
-val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=4,
+val_dataset = Kitti360("/home/sbharadwaj/dataset/4096-8192-kitti360/", train=False, weights=False, npoints_partial = 4096, npoints=8192)
+val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=8,
                                         shuffle=False, num_workers=8, drop_last=True)
 
 # # For visualizations
@@ -104,14 +104,14 @@ model = config.get_model(cfg, device=device, dataset=train_dataset)
 generator = config.get_generator(model, cfg, device=device)
 
 # Intialize training
-optimizer = optim.Adam(model.parameters(), lr=1e-4)
+optimizer = optim.Adam(model.parameters(), lr=1e-5)
 # optimizer = optim.SGD(model.parameters(), lr=1e-2, momentum=0.9)
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
+# scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.1)
 trainer = config.get_trainer(model, optimizer, cfg, device=device)
 
 checkpoint_io = CheckpointIO(out_dir, model=model, optimizer=optimizer)
 try:
-    load_dict = checkpoint_io.load('model.pt') # LOAD MODEL HERE
+    load_dict = checkpoint_io.load('40model.pt') # LOAD MODEL HERE
 except FileExistsError:
     load_dict = dict()
 epoch_it = load_dict.get('epoch_it', 0)
@@ -136,10 +136,10 @@ nparameters = sum(p.numel() for p in model.parameters())
 print('Total number of parameters: %d' % nparameters)
 
 print('output path: ', cfg['training']['out_dir'])
-for epoch in range(0, 200):
+for epoch in range(40,300):
     #TRAIN MODE
 
-    for it, batch in enumerate(train_loader, 0):
+    for i, batch in enumerate(train_loader, 0):
         optimizer.zero_grad()
         id, input, gt = batch
 
@@ -153,6 +153,7 @@ for epoch in range(0, 200):
             print('[Epoch %02d] it=%03d, loss=%.4f, time: %.2fs, %02d:%02d'
                      % (epoch, it, loss, time.time() - t0, t.hour, t.minute))
 
+        it+=1
         # # Visualize output
         # if visualize_every > 0 and (it % visualize_every) == 0:
         #     print('Visualizing')
@@ -200,7 +201,7 @@ for epoch in range(0, 200):
         # # Exit if necessary
         # if exit_after > 0 and (time.time() - t0) >= exit_after:
         #     print('Time limit reached. Exiting.')
-    if epoch % 5 == 0:
+    if epoch % 10 == 0:
         checkpoint_io.save(str(epoch)+'model.pt', epoch_it=epoch, it=it)
     # scheduler.step()
         #     exit(3)

@@ -135,7 +135,6 @@ class Trainer(BaseTrainer):
         complete_voxel = data[2].to(device)
         
         logits = torch.squeeze(self.model.encode_inputs(partial_cloud), dim=1)
-        
         loss_i = F.binary_cross_entropy_with_logits(
             logits, complete_voxel, reduction='none')
         loss = loss_i.sum(-1).mean()

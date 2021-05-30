@@ -65,6 +65,8 @@ class LocalPoolPointnet(nn.Module):
         else:
             raise ValueError('incorrect scatter type')
         self.conv_out = nn.Conv3d(64, 1, 1)
+        # self.conv_1 = nn.Conv3d(64, 32, 1)
+        # self.conv_2 = nn.Conv3d(32, 16, 1)
 
     def generate_plane_features(self, p, c, plane='xz'):
         # acquire indices of features in plane
@@ -87,12 +89,14 @@ class LocalPoolPointnet(nn.Module):
         '''
         modified to fit (64, 64, 16)
         '''
+        # import pdb;pdb.set_trace()
         p_nor = normalize_3d_coordinate(p.clone(), padding=self.padding)
         index = coordinate2index(p_nor, self.reso_grid, coord_type='3d')
         # scatter grid features from points
+        # import pdb;pdb.set_trace()
         fea_grid = c.new_zeros(p.size(0), self.c_dim, 64*64*16) # self.reso_grid**3)
         c = c.permute(0, 2, 1)
-        fea_grid = scatter_mean(c, index, out=fea_grid) # B x C x reso^3
+        fea_grid = scatter_mean(c, index, out=fea_grid) # B x C x 64*64*16
         fea_grid = fea_grid.reshape(p.size(0), self.c_dim, 64, 64, 16) # sparce matrix (B x 512 x reso x reso)
 
         if self.unet3d is not None:
@@ -137,7 +141,7 @@ class LocalPoolPointnet(nn.Module):
         if 'grid' in self.plane_type:
             coord['grid'] = normalize_3d_coordinate(p.clone(), padding=self.padding)
             index['grid'] = coordinate2index(coord['grid'], self.reso_grid, coord_type='3d')
-        
+      
         net = self.fc_pos(p)
 
         net = self.blocks[0](net)
@@ -146,6 +150,7 @@ class LocalPoolPointnet(nn.Module):
             net = torch.cat([net, pooled], dim=2)
             net = block(net)
 
+        # import pdb;pdb.set_trace()  
         c = self.fc_c(net)
 
         fea = {}
@@ -158,6 +163,9 @@ class LocalPoolPointnet(nn.Module):
         if 'yz' in self.plane_type:
             fea['yz'] = self.generate_plane_features(p, c, plane='yz')
         
+        # import pdb;pdb.set_trace()
+        # fea = F.relu(self.conv_1(fea['grid']))
+        # fea = F.relu(self.conv_2(fea))
         return self.conv_out(fea['grid'])
 
 class PatchLocalPoolPointnet(nn.Module):

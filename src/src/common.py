@@ -314,6 +314,7 @@ def coordinate2index(x, reso, coord_type='2d'):
         modified to fit (64, 64, 16)
         '''
         # index = x[:, :, 0] + reso * (x[:, :, 1] + reso * x[:, :, 2])
+        # 64 * x-cord + 64 * 64 * y-cord + 64 * 64* 16 * z-cord IS CORRECT
         index = x[:, :, 0] + reso * (x[:, :, 1] + 16 * x[:, :, 2])
     index = index[:, None, :]
 

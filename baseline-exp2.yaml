@@ -14,19 +14,19 @@ data:
 model:
   encoder: pointnet_local_pool
   encoder_kwargs:
-    hidden_dim: 64
+    hidden_dim: 32
     plane_type: 'grid'
     grid_resolution: 64
     unet3d: True
     unet3d_kwargs:
-      num_levels: 4
-      f_maps: 64
-      in_channels: 64
-      out_channels: 64
+      num_levels: 4 # changed
+      f_maps: 32
+      in_channels: 32
+      out_channels: 32
   decoder: None
-  c_dim: 64
+  c_dim: 32
 training:
-  out_dir:  out/voxels/18k-1000epoch-lr4-4096/
+  out_dir:  out/voxels/10k-data-refac/
   batch_size: 4
   model_selection_metric: iou
   model_selection_mode: maximize
