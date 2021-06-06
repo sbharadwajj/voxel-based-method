@@ -57,14 +57,12 @@ shutil.copyfile(args.config, os.path.join(out_dir, 'config.yaml'))
 # train_dataset = config.get_dataset('train', cfg)
 # val_dataset = config.get_dataset('val', cfg, return_idx=True)
 
-train_dataset = Kitti360(cfg, train=True, npoints=cfg['data']['pointcloud_n'])
-val_dataset = Kitti360(cfg, train=False, npoints=cfg['data']['pointcloud_n'])
-
-train_loader = torch.utils.data.DataLoader(
-    train_dataset, batch_size=batch_size, num_workers=cfg['training']['n_workers'], shuffle=True)
-
-val_loader = torch.utils.data.DataLoader(
-        val_dataset, batch_size=8, num_workers=cfg['training']['n_workers_val'], shuffle=False)
+train_dataset = Kitti360(dataset_path="/home/sbharadwaj/dataset/4096-8192-kitti360-semantic/", train=True, weights=False , npoints_partial = 4096, npoints=8192)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=8,
+                                        shuffle=True, num_workers=8, drop_last=True)
+val_dataset = Kitti360("/home/sbharadwaj/dataset/4096-8192-kitti360-semantic/", train=False, weights=False, npoints_partial = 4096, npoints=8192)
+val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=8,
+                                        shuffle=False, num_workers=8, drop_last=True)
 
 # # For visualizations
 # vis_loader = torch.utils.data.DataLoader(
@@ -103,7 +101,7 @@ trainer = config.get_trainer(model, optimizer, cfg, device=device)
 
 checkpoint_io = CheckpointIO(out_dir, model=model, optimizer=optimizer)
 try:
-    load_dict = checkpoint_io.load('149model.pt')
+    load_dict = checkpoint_io.load('40model.pt')
 except FileExistsError:
     load_dict = dict()
 epoch_it = load_dict.get('epoch_it', 0)
@@ -131,16 +129,16 @@ print('output path: ', cfg['training']['out_dir'])
 for epoch in range(1):
     #TRAIN MODE
 
-    for i, batch in enumerate(train_loader, 0):
+    for i, batch in enumerate(val_loader, 0):
         optimizer.zero_grad()
         id, input, gt = batch
 
         logits, loss = trainer.val_step(batch)
         logger.add_scalar('train/loss', loss, it)
         
-        np.savez(os.path.join(out_dir, "train_data" , str(i)+"data.npz"), pred=logits.numpy(), inp=input, gt=gt)
+        np.savez(os.path.join(out_dir, "epoch_40" , str(i)+"data.npz"), pred=logits.detach().cpu().numpy(), inp=input, gt=gt)
         # Print output
-        if print_every > 0 and (it % print_every) == 0:
-            t = datetime.datetime.now()
-            print('[Epoch %02d] it=%03d, loss=%.4f, time: %.2fs, %02d:%02d'
-                     % (epoch_it, it, loss, time.time() - t0, t.hour, t.minute))
+        # if print_every > 0 and (it % print_every) == 0:
+        t = datetime.datetime.now()
+        print('[Epoch %02d] it=%03d, loss=%.4f, time: %.2fs, %02d:%02d'
+                    % (epoch_it, it, loss, time.time() - t0, t.hour, t.minute))

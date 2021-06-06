@@ -125,7 +125,7 @@ nparameters = sum(p.numel() for p in model.parameters())
 print('Total number of parameters: %d' % nparameters)
 
 print('output path: ', cfg['training']['out_dir'])
-for epoch in range(150):
+for epoch in range(200):
     #TRAIN MODE
 
     for i, batch in enumerate(train_loader, 0):
@@ -188,6 +188,7 @@ for epoch in range(150):
         # if exit_after > 0 and (time.time() - t0) >= exit_after:
         #     print('Time limit reached. Exiting.')
 
-    checkpoint_io.save(str(epoch)+'model.pt', epoch_it=epoch)
+    if epoch %10 == 0:
+        checkpoint_io.save(str(epoch)+'model.pt', epoch_it=epoch, it=it)
     # scheduler.step()
         #     exit(3)

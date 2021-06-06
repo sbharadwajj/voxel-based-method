@@ -9,7 +9,7 @@ import random
 import pandas as pd
 from pyntcloud import PyntCloud
 
-# from data_utils import *
+from data_utils import *
 
 def resample_pcd(pcd, n):
     """Drop or duplicate points so that pcd has exactly n points"""
@@ -28,17 +28,17 @@ class Kitti360(data.Dataset):
             self.gt = os.path.join(dataset_path, "train", "gt")
             self.X = os.listdir(self.inp)
             self.Y = os.listdir(self.gt)
-            # sort_x = sorted(self.Y)[0::2000] # choose 10
-            # self.X = sort_x
+            sort_x = sorted(self.X) # choose 10
+            self.X = sort_x
             self.len = len(self.X)
             print(self.len)
         else:
-            self.inp = os.path.join("/home/sbharadwaj/dataset/4096-8192-kitti360", "train", "partial")
-            self.gt = os.path.join(dataset_path, "train", "gt") #TRAIN FOR NOW
+            self.inp = os.path.join("/home/sbharadwaj/dataset/4096-8192-kitti360", "val", "partial")
+            self.gt = os.path.join(dataset_path, "val", "gt") #TRAIN FOR NOW
             self.X = os.listdir(self.inp)
             self.Y = os.listdir(self.gt)
 
-            sort_x = sorted(self.X)[0::2000] # choose the 100th one
+            sort_x = sorted(self.X)[0::200] # choose the 100th one
             self.X = sort_x
 
             self.len = len(self.X)
