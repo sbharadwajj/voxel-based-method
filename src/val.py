@@ -57,10 +57,10 @@ shutil.copyfile(args.config, os.path.join(out_dir, 'config.yaml'))
 # train_dataset = config.get_dataset('train', cfg)
 # val_dataset = config.get_dataset('val', cfg, return_idx=True)
 
-train_dataset = Kitti360(dataset_path="/home/sbharadwaj/dataset/4096-8192-kitti360/", train=True, weights=False , npoints_partial = 4096, npoints=8192)
+train_dataset = Kitti360(dataset_path="/home/bharadwaj/dataset/scripts/4096-8192-kitti360/", train=True, weights=False , npoints_partial = 4096, npoints=8192)
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=4,
                                         shuffle=True, num_workers=8, drop_last=True)
-val_dataset = Kitti360("/home/sbharadwaj/dataset/4096-8192-kitti360/", train=False, weights=False, npoints_partial = 4096, npoints=8192)
+val_dataset = Kitti360("/home/bharadwaj/dataset/scripts/4096-8192-kitti360/", train=False, weights=False, npoints_partial = 4096, npoints=8192)
 val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=4,
                                         shuffle=False, num_workers=8, drop_last=True)
 
@@ -126,6 +126,7 @@ nparameters = sum(p.numel() for p in model.parameters())
 print('Total number of parameters: %d' % nparameters)
 
 print('output path: ', cfg['training']['out_dir'])
+val_avg = []
 for epoch in range(1):
     #TRAIN MODE
 
@@ -136,12 +137,16 @@ for epoch in range(1):
         logits, loss = trainer.val_step(batch)
         logger.add_scalar('train/loss', loss, it)
         
-        if device == "cuda":
-            np.savez(os.path.join(out_dir, "epoch_120" ,str(i)+"val-level-4.npz"), pred=logits.detach().cpu().numpy(), inp=input, gt=gt)
-        else:
-            np.savez(os.path.join(out_dir, "epoch_120" ,str(i)+"val-level-4.npz"), pred=logits.detach().cpu().numpy(), inp=input, gt=gt)
+        val_avg.append(loss.item())
+        # if device == "cuda":
+        #     np.savez(os.path.join(out_dir, "epoch_120" ,str(i)+"val-level-4.npz"), pred=logits.detach().cpu().numpy(), inp=input, gt=gt)
+        # else:
+        #     np.savez(os.path.join(out_dir, "epoch_120" ,str(i)+"val-level-4.npz"), pred=logits.detach().cpu().numpy(), inp=input, gt=gt)
         # Print output
         # if print_every > 0 and (it % print_every) == 0:
         t = datetime.datetime.now()
         print('[Epoch %02d] it=%03d, loss=%.4f, time: %.2fs, %02d:%02d'
                     % (epoch_it, it, loss, time.time() - t0, t.hour, t.minute))
+
+val = sum(val_avg) / len(val_avg)
+print(val)

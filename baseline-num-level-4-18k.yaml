@@ -26,7 +26,7 @@ model:
   decoder: None
   c_dim: 64
 training:
-  out_dir:  out/voxels/num-level-4-10k/
+  out_dir:  out/voxels/bin-vox-final/
   batch_size: 4
   model_selection_metric: iou
   model_selection_mode: maximize

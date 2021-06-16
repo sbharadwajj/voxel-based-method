@@ -8,16 +8,16 @@
 
 #resources:
 
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=2
 # the job can use and see 4 CPUs (from max 24).
 
 #SBATCH --partition=test
 # the slurm partition the job is queued to.
 
-#SBATCH --mem-per-cpu=3G
+#SBATCH --mem-per-cpu=12G
 # the job will need 12GB of memory equally distributed on 4 cpus.  (251GB are available in total on one node)
 
-#SBATCH --gres=gpu:4
+#SBATCH --gres=gpu:1
 #the job can use and see 1 GPUs (4 GPUs are available in total on one node)
 
 #SBATCH --time=00:15:00
@@ -46,7 +46,7 @@
 #cnn_minst.py <model save path> <mnist data path>
 ####
 
-singularity exec /home/bharadwaj/envi/torch14-cuda10-ConvOccu.simg python train_baseline.py /home/bharadwaj/implementations/convONw-baseline2/baseline-data-aug.yaml
+singularity exec /home/bharadwaj/envi/torch14-cuda10-ConvOccu.simg python train_baseline.py /home/bharadwaj/implementations/convONw-baseline2/baseline-num-level-4-18k.yaml
 # singularity exec /home/bharadwaj/envi/test2.simg make
 # singularity exec /home/bharadwaj/envi/test2.simg python2.7 /home/bharadwaj/implementations/PointSetGeneration/depthestimate/train_nn.py [data=/home/bharadwaj/implementations/PointSetGeneration/data/] [dump=dump/] [num=3] predict
 

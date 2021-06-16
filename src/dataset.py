@@ -29,8 +29,8 @@ class Kitti360(data.Dataset):
             self.gt = os.path.join(dataset_path, "train", "gt")
             self.X = os.listdir(self.inp)
             self.Y = os.listdir(self.gt)
-            sort_y = sorted(self.Y)[0::2] # choose 10k data
-            self.Y = sort_y
+            # sort_y = sorted(self.Y)[0::2] # choose 10k data
+            # self.Y = sort_y
             self.len = len(self.Y)
             print(self.len)
         else:
@@ -39,8 +39,8 @@ class Kitti360(data.Dataset):
             self.X = os.listdir(self.inp)
             self.Y = os.listdir(self.gt)
 
-            sort_y = sorted(self.Y)[0::200] # choose the 100th one
-            self.Y = sort_y
+            # sort_y = sorted(self.Y)[0::200] # choose the 100th one
+            # self.Y = sort_y
 
             self.len = len(self.Y)
             print(self.len)
@@ -50,10 +50,10 @@ class Kitti360(data.Dataset):
         '''
         loads poses to a dictonary to read
         '''
-        self.pose = '/home/sbharadwaj/dataset/data_poses'
+        self.pose = '/home/bharadwaj/dataset/KITTI-360/data_poses'
         pose_dict = {}
         poses = os.listdir(self.pose)
-        pose_folders = [os.path.join('/home/sbharadwaj/dataset/data_poses', folder) for folder in poses]
+        pose_folders = [os.path.join('/home/bharadwaj/dataset/KITTI-360/data_poses', folder) for folder in poses]
         self.pose_dict = {path.split("/")[-1]:np.loadtxt(path+"/poses.txt") for path in pose_folders}
 
     def get_translation_vec(self, model_id, poses):
@@ -102,8 +102,8 @@ class Kitti360(data.Dataset):
         partial = self.read_pcd(os.path.join(self.inp, model_id), center)
         complete = self.read_pcd(os.path.join(self.gt, model_id), center)  
 
-        # if self.train:
-        #     complete, partial = augment_cloud([complete, partial])          
+        if self.train:
+            complete, partial = augment_cloud([complete, partial])          
         return model_id, partial.astype(np.float32), self.voxelize(complete.astype(np.float32), 64, 64, 16)
 
     def __len__(self):
