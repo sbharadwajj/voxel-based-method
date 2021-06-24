@@ -19,7 +19,7 @@ model:
     grid_resolution: 64
     unet3d: True
     unet3d_kwargs:
-      num_levels: 3
+      num_levels: 4
       f_maps: 64
       in_channels: 64
       out_channels: 64
