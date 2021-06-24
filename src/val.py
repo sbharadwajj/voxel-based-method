@@ -13,6 +13,41 @@ import shutil
 from torchsummary import summary
 from dataset import *
 
+def pred_to_labels(logits):
+    pred = torch.sigmoid(logits).cpu().numpy()
+    pred[pred > 0.5] = 1.0
+    pred[pred < 0.5] = 0.0   
+    return pred
+
+
+def compute_iou(occ1, occ2):
+    ''' Computes the Intersection over Union (IoU) value for two sets of
+    occupancy values.
+    Args:
+        occ1 (tensor): first set of occupancy values
+        occ2 (tensor): second set of occupancy values
+    '''
+    occ1 = np.asarray(occ1)
+    occ2 = np.asarray(occ2)
+
+    # Put all data in second dimension
+    # Also works for 1-dimensional data
+    if occ1.ndim >= 2:
+        occ1 = occ1.reshape(occ1.shape[0], -1)
+    if occ2.ndim >= 2:
+        occ2 = occ2.reshape(occ2.shape[0], -1)
+
+    # Convert to boolean values
+    occ1 = (occ1 >= 0.5)
+    occ2 = (occ2 >= 0.5)
+
+    # Compute IOU
+    area_union = (occ1 | occ2).astype(np.float32).sum(axis=-1)
+    area_intersect = (occ1 & occ2).astype(np.float32).sum(axis=-1)
+
+    iou = (area_intersect / area_union)
+
+    return iou
 
 # Arguments
 parser = argparse.ArgumentParser(
@@ -64,30 +99,6 @@ val_dataset = Kitti360("/home/bharadwaj/dataset/scripts/4096-8192-kitti360/", tr
 val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=4,
                                         shuffle=False, num_workers=8, drop_last=True)
 
-# # For visualizations
-# vis_loader = torch.utils.data.DataLoader(
-#     val_dataset, batch_size=1, shuffle=False,)
-# model_counter = defaultdict(int)
-# data_vis_list = []
-
-# # Build a data dictionary for visualization
-# iterator = iter(vis_loader)
-# for i in range(len(vis_loader)):
-#     data_vis = next(iterator)
-#     idx = data_vis['idx'].item()
-#     model_dict = val_dataset.get_model_dict(idx)
-#     category_id = model_dict.get('category', 'n/a')
-#     category_name = val_dataset.metadata[category_id].get('name', 'n/a')
-#     category_name = category_name.split(',')[0]
-#     if category_name == 'n/a':
-#         category_name = category_id
-
-#     c_it = model_counter[category_id]
-#     if c_it < vis_n_outputs:
-#         data_vis_list.append({'category': category_name, 'it': c_it, 'data': data_vis})
-
-#     model_counter[category_id] += 1
-
 # Model
 model = config.get_model(cfg, device=device, dataset=train_dataset)
 print(model)
@@ -96,7 +107,6 @@ generator = config.get_generator(model, cfg, device=device)
 
 # Intialize training
 optimizer = optim.Adam(model.parameters(), lr=1e-4)
-# optimizer = optim.SGD(model.parameters(), lr=1e-4, momentum=0.9)
 trainer = config.get_trainer(model, optimizer, cfg, device=device)
 
 checkpoint_io = CheckpointIO(out_dir, model=model, optimizer=optimizer)
@@ -137,7 +147,7 @@ for epoch in range(1):
         logits, loss = trainer.val_step(batch)
         logger.add_scalar('train/loss', loss, it)
         
-        val_avg.append(loss.item())
+        # val_avg.append(loss.item())
         # if device == "cuda":
         #     np.savez(os.path.join(out_dir, "epoch_120" ,str(i)+"val-level-4.npz"), pred=logits.detach().cpu().numpy(), inp=input, gt=gt)
         # else:
@@ -148,5 +158,13 @@ for epoch in range(1):
         print('[Epoch %02d] it=%03d, loss=%.4f, time: %.2fs, %02d:%02d'
                     % (epoch_it, it, loss, time.time() - t0, t.hour, t.minute))
 
+        # EVAL
+        # occ_pred = pred_to_labels(logits)
+        occ_pred = torch.sigmoid(logits).cpu().numpy()
+        occ_gt = gt.cpu().numpy()
+        # print(occ_pred.shape, occ_gt.shape)
+        iou_b = compute_iou(occ_gt, occ_pred)
+        val_avg.append(sum(iou_b) / 4)
+        # print(iou_b)
 val = sum(val_avg) / len(val_avg)
 print(val)
