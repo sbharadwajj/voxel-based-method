@@ -20,40 +20,43 @@ def resample_pcd(pcd, n):
            
 
 class Kitti360(data.Dataset): 
-    def __init__(self, dataset_path, train = True, weights = False, npoints_partial = 1024, npoints = 2048):
+    def __init__(self, dataset_path, split, pose_path, train = True, weights = False, npoints_partial = 1024, npoints = 2048):
         self.train = train
         self.npoints = npoints
         self.weights = weights
         if self.train:
-            self.inp = os.path.join(dataset_path, "train", "partial")
-            self.gt = os.path.join(dataset_path, "train", "gt")
+            self.inp = os.path.join(dataset_path, split, "partial")
+            self.gt = os.path.join(dataset_path, split, "gt")
             self.X = os.listdir(self.inp)
             self.Y = os.listdir(self.gt)
-            # sort_y = sorted(self.Y)[0::2] # choose 10k data
+
+            # FOR VISUALIZATION CHOOSE 10
+            # sort_y = sorted(self.Y)[0::200] # choose 10k data
             # self.Y = sort_y
             self.len = len(self.Y)
-            print(self.len)
+            print("Number of training samples:", self.len)
         else:
-            self.inp = os.path.join(dataset_path, "val", "partial")
-            self.gt = os.path.join(dataset_path, "val", "gt")
+            self.inp = os.path.join(dataset_path, split, "partial")
+            self.gt = os.path.join(dataset_path, split, "gt")
             self.X = os.listdir(self.inp)
             self.Y = os.listdir(self.gt)
 
-            # sort_y = sorted(self.Y)[0::200] # choose the 100th one
+            # FOR VISUALIZATION CHOOSE 10
+            # sort_y = sorted(self.Y)[0::200] 
             # self.Y = sort_y
 
             self.len = len(self.Y)
-            print(self.len)
+            print("Number of val samples:", self.len)
 
         # print(self.inp)
         # print(self.gt)
         '''
         loads poses to a dictonary to read
         '''
-        self.pose = '/home/bharadwaj/dataset/KITTI-360/data_poses'
+        self.pose = pose_path
         pose_dict = {}
         poses = os.listdir(self.pose)
-        pose_folders = [os.path.join('/home/bharadwaj/dataset/KITTI-360/data_poses', folder) for folder in poses]
+        pose_folders = [os.path.join(self.pose, folder) for folder in poses]
         self.pose_dict = {path.split("/")[-1]:np.loadtxt(path+"/poses.txt") for path in pose_folders}
 
     def get_translation_vec(self, model_id, poses):
@@ -102,8 +105,9 @@ class Kitti360(data.Dataset):
         partial = self.read_pcd(os.path.join(self.inp, model_id), center)
         complete = self.read_pcd(os.path.join(self.gt, model_id), center)  
 
-        if self.train:
-            complete, partial = augment_cloud([complete, partial])          
+        # data augmentation
+        # if self.train:
+        #     complete, partial = augment_cloud([complete, partial])          
         return model_id, partial.astype(np.float32), self.voxelize(complete.astype(np.float32), 64, 64, 16)
 
     def __len__(self):

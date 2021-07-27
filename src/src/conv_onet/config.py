@@ -92,7 +92,7 @@ def get_trainer(model, optimizer, cfg, device, **kwargs):
         cfg (dict): imported yaml config
         device (device): pytorch device
     '''
-    threshold = cfg['test']['threshold']
+    threshold = 0.5
     out_dir = cfg['training']['out_dir']
     vis_dir = os.path.join(out_dir, 'vis')
     input_type = cfg['data']['input_type']

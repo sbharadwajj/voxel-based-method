@@ -19,7 +19,6 @@ def pred_to_labels(logits):
     pred[pred < 0.5] = 0.0   
     return pred
 
-
 def compute_iou(occ1, occ2):
     ''' Computes the Intersection over Union (IoU) value for two sets of
     occupancy values.
@@ -55,9 +54,7 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument('config', type=str, help='Path to config file.')
 parser.add_argument('--no-cuda', action='store_true', help='Do not use cuda.')
-parser.add_argument('--exit-after', type=int, default=-1,
-                    help='Checkpoint and exit after specified number of seconds'
-                         'with exit code 2.')
+parser.add_argument('--save-pred', action='store_true', default=False, help='Saves predictions to NPZ file')
 
 args = parser.parse_args()
 cfg = config.load_config(args.config, 'configs/default.yaml')
@@ -69,18 +66,6 @@ t0 = time.time()
 # Shorthands
 out_dir = cfg['training']['out_dir']
 batch_size = cfg['training']['batch_size']
-backup_every = cfg['training']['backup_every']
-vis_n_outputs = cfg['generation']['vis_n_outputs']
-exit_after = args.exit_after
-
-model_selection_metric = cfg['training']['model_selection_metric']
-if cfg['training']['model_selection_mode'] == 'maximize':
-    model_selection_sign = 1
-elif cfg['training']['model_selection_mode'] == 'minimize':
-    model_selection_sign = -1
-else:
-    raise ValueError('model_selection_mode must be '
-                     'either maximize or minimize.')
 
 # Output directory
 if not os.path.exists(out_dir):
@@ -89,21 +74,15 @@ if not os.path.exists(out_dir):
 shutil.copyfile(args.config, os.path.join(out_dir, 'config.yaml'))
 
 # Dataset
-# train_dataset = config.get_dataset('train', cfg)
-# val_dataset = config.get_dataset('val', cfg, return_idx=True)
-
-train_dataset = Kitti360(dataset_path="/home/bharadwaj/dataset/scripts/4096-8192-kitti360/", train=True, weights=False , npoints_partial = 4096, npoints=8192)
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=4,
-                                        shuffle=True, num_workers=8, drop_last=True)
-val_dataset = Kitti360("/home/bharadwaj/dataset/scripts/4096-8192-kitti360/", train=False, weights=False, npoints_partial = 4096, npoints=8192)
-val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=4,
-                                        shuffle=False, num_workers=8, drop_last=True)
+train_dataset = Kitti360(dataset_path=cfg['data']['path'], split=cfg['data']['train_split'], pose_path=cfg['data']['pose_path'], train=True, weights=False , npoints_partial = 4096, npoints=8192)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size,
+                                        shuffle=True, num_workers=num_workers, drop_last=True)
+val_dataset = Kitti360(dataset_path=cfg['data']['path'], split=cfg['data']['val_split'], pose_path=cfg['data']['pose_path'], train=False, weights=False, npoints_partial = 4096, npoints=8192)
+val_loader = torch.utils.data.DataLoader(val_dataset, batch_size,
+                                        shuffle=False, num_workers=num_workers, drop_last=True)
 
 # Model
 model = config.get_model(cfg, device=device, dataset=train_dataset)
-print(model)
-# Generator
-generator = config.get_generator(model, cfg, device=device)
 
 # Intialize training
 optimizer = optim.Adam(model.parameters(), lr=1e-4)
@@ -127,9 +106,6 @@ logger = SummaryWriter(os.path.join(out_dir, 'logs'))
 
 # Shorthands
 print_every = cfg['training']['print_every']
-checkpoint_every = cfg['training']['checkpoint_every']
-validate_every = cfg['training']['validate_every']
-visualize_every = cfg['training']['visualize_every']
 
 # Print model
 nparameters = sum(p.numel() for p in model.parameters())
@@ -147,13 +123,12 @@ for epoch in range(1):
         logits, loss = trainer.val_step(batch)
         logger.add_scalar('train/loss', loss, it)
         
-        # val_avg.append(loss.item())
-        # if device == "cuda":
-        #     np.savez(os.path.join(out_dir, "epoch_120" ,str(i)+"val-level-4.npz"), pred=logits.detach().cpu().numpy(), inp=input, gt=gt)
-        # else:
-        #     np.savez(os.path.join(out_dir, "epoch_120" ,str(i)+"val-level-4.npz"), pred=logits.detach().cpu().numpy(), inp=input, gt=gt)
-        # Print output
-        # if print_every > 0 and (it % print_every) == 0:
+        if args.save-pred:
+            if device == "cuda":
+                np.savez(os.path.join(out_dir, "epoch_120" ,str(i)+"val.npz"), pred=logits.detach().cpu().numpy(), inp=input, gt=gt)
+            else:
+                np.savez(os.path.join(out_dir, "epoch_120" ,str(i)+"val.npz"), pred=logits.detach().cpu().numpy(), inp=input, gt=gt)
+
         t = datetime.datetime.now()
         print('[Epoch %02d] it=%03d, loss=%.4f, time: %.2fs, %02d:%02d'
                     % (epoch_it, it, loss, time.time() - t0, t.hour, t.minute))
@@ -167,4 +142,4 @@ for epoch in range(1):
         val_avg.append(sum(iou_b) / 4)
         # print(iou_b)
 val = sum(val_avg) / len(val_avg)
-print(val)
+print("mIoU over", len(val_avg), "samples:", val)
