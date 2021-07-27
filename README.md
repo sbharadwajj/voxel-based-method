@@ -5,7 +5,7 @@ This repository contains the code for Voxel-Based Methods split into two main br
 - master: code for binary voxelization (scene completion)
 - semantic: code for semantic scene completion
 
-![alt text](https://github.com/sbharadwajj/convONw-baseline2/voxel-skeleton.png)
+![alt text](https://github.com/sbharadwajj/convONw-baseline2/blob/new-refactor/voxel-skeleton.png?raw=True)
 
 ## Environment
 
@@ -21,4 +21,4 @@ singularity exec <path-to-simg> python src/train_baseline.py baseline-num-level-
 
 Configure `baseline-num-level-4-18k.yaml` and change the necessary paths of dataset and output directory.
 
-The code is borrowed from `https://github.com/autonomousvision/convolutional_occupancy_networks` and modifications are made.
+The code is borrowed from [Convolutional Occupancy Networks](https://github.com/autonomousvision/convolutional_occupancy_networks) and modifications are made.

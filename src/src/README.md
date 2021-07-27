@@ -6,4 +6,4 @@ The file `encoder/pointnet.py` is modefied for our particular setting to fit the
 - voxel grid of shape [64, 64, 16]
 - Conv3D as final output layer following 3D U-Net as shown in the image below:
 
-![alt text](https://github.com/sbharadwajj/convONw-baseline2/voxel-skeleton.png)
+![alt text](https://github.com/sbharadwajj/convONw-baseline2/blob/new-refactor/voxel-skeleton.png?raw=True)
