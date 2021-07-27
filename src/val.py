@@ -187,9 +187,6 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument('config', type=str, help='Path to config file.')
 parser.add_argument('--no-cuda', action='store_true', help='Do not use cuda.')
-parser.add_argument('--exit-after', type=int, default=-1,
-                    help='Checkpoint and exit after specified number of seconds'
-                         'with exit code 2.')
 
 args = parser.parse_args()
 cfg = config.load_config(args.config, 'configs/default.yaml')
@@ -201,18 +198,8 @@ t0 = time.time()
 # Shorthands
 out_dir = cfg['training']['out_dir']
 batch_size = cfg['training']['batch_size']
-backup_every = cfg['training']['backup_every']
-vis_n_outputs = cfg['generation']['vis_n_outputs']
+num_workers = cfg['training']['n_workers']
 exit_after = args.exit_after
-
-model_selection_metric = cfg['training']['model_selection_metric']
-if cfg['training']['model_selection_mode'] == 'maximize':
-    model_selection_sign = 1
-elif cfg['training']['model_selection_mode'] == 'minimize':
-    model_selection_sign = -1
-else:
-    raise ValueError('model_selection_mode must be '
-                     'either maximize or minimize.')
 
 # Output directory
 if not os.path.exists(out_dir):
@@ -238,18 +225,11 @@ trainer = config.get_trainer(model, optimizer, cfg, device=device)
 
 checkpoint_io = CheckpointIO(out_dir, model=model, optimizer=optimizer)
 try:
-    load_dict = checkpoint_io.load('120model.pt')
+    load_dict = checkpoint_io.load('model.pt')
 except FileExistsError:
     load_dict = dict()
 epoch_it = load_dict.get('epoch_it', 0)
 it = load_dict.get('it', 0)
-metric_val_best = load_dict.get(
-    'loss_val_best', -model_selection_sign * np.inf)
-
-if metric_val_best == np.inf or metric_val_best == -np.inf:
-    metric_val_best = -model_selection_sign * np.inf
-print('Current best validation metric (%s): %.8f'
-      % (model_selection_metric, metric_val_best))
 logger = SummaryWriter(os.path.join(out_dir, 'logs'))
 
 # Print model
