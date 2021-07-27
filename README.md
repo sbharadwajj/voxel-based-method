@@ -2,7 +2,7 @@
 
 This repository contains the code for Voxel-Based Methods split into two main branches:
 
-- master: code for binary voxelization (scene completion)
+- main: code for binary voxelization (scene completion)
 - semantic: code for semantic scene completion
 
 ![alt text](https://github.com/sbharadwajj/convONw-baseline2/blob/new-refactor/voxel-skeleton.png?raw=True)

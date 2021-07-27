@@ -24,7 +24,7 @@ model:
   decoder: None
   c_dim: 64
 training:
-  out_dir:  out/voxels/code-test/
+  out_dir:  out/voxels/exp1/
   batch_size: 4
   print_every: 5
   n_workers: 8
