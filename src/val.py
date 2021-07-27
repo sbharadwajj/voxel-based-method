@@ -221,18 +221,15 @@ if not os.path.exists(out_dir):
 shutil.copyfile(args.config, os.path.join(out_dir, 'config.yaml'))
 
 # Dataset
-train_dataset = Kitti360(dataset_path="/home/bharadwaj/dataset/scripts/4096-8192-kitti360-semantic/", train=True, weights=False , npoints_partial = 4096, npoints=8192)
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=8,
-                                        shuffle=True, num_workers=8, drop_last=True)
-val_dataset = Kitti360("/home/bharadwaj/dataset/scripts/4096-8192-kitti360-semantic/", train=False, weights=False, npoints_partial = 4096, npoints=8192)
-val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=8,
-                                        shuffle=False, num_workers=8, drop_last=True)
+train_dataset = Kitti360(dataset_path=cfg['data']['path'], partial_path=cfg['data']['partial_path'], split=cfg['data']['train_split'], pose_path=cfg['data']['pose_path'], train=True, weights=False , npoints_partial = 4096, npoints=8192)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size,
+                                        shuffle=True, num_workers=num_workers, drop_last=True)
+val_dataset = Kitti360(dataset_path=cfg['data']['path'], partial_path=cfg['data']['partial_path'], split=cfg['data']['val_split'], pose_path=cfg['data']['pose_path'], train=False, weights=False, npoints_partial = 4096, npoints=8192)
+val_loader = torch.utils.data.DataLoader(val_dataset, batch_size,
+                                        shuffle=False, num_workers=num_workers, drop_last=True)
 
 # Model
 model = config.get_model(cfg, device=device, dataset=train_dataset)
-
-# Generator
-generator = config.get_generator(model, cfg, device=device)
 
 # Intialize training
 optimizer = optim.Adam(model.parameters(), lr=1e-4)
@@ -255,12 +252,6 @@ print('Current best validation metric (%s): %.8f'
       % (model_selection_metric, metric_val_best))
 logger = SummaryWriter(os.path.join(out_dir, 'logs'))
 
-# Shorthands
-print_every = cfg['training']['print_every']
-checkpoint_every = cfg['training']['checkpoint_every']
-validate_every = cfg['training']['validate_every']
-visualize_every = cfg['training']['visualize_every']
-
 # Print model
 nparameters = sum(p.numel() for p in model.parameters())
 print('Total number of parameters: %d' % nparameters)
@@ -279,8 +270,6 @@ for epoch in range(1):
         logger.add_scalar('train/loss', loss, it)
         # val_avg.append(loss.item())
         # np.savez(os.path.join(out_dir, "epoch_40" , str(i)+"data.npz"), pred=logits.detach().cpu().numpy(), inp=input, gt=gt)
-        # Print output
-        # if print_every > 0 and (it % print_every) == 0:
         t = datetime.datetime.now()
         print('[Epoch %02d] it=%03d, loss=%.4f, time: %.2fs, %02d:%02d'
                     % (epoch_it, it, loss, time.time() - t0, t.hour, t.minute))
@@ -288,12 +277,11 @@ for epoch in range(1):
         # EVAL
         pred = pred_to_labels(logits)
         np_gt = gt.cpu().numpy()
-        # print(occ_pred.shape, occ_gt.shape)
+
 
         chamfer_dist = chamfer_distance_voxel_pcd(pred, np_gt)
         class_wise = []
-        # print(np.unique(np_gt))
-        # print(np.unique(pred))
+
         for sem in np.unique(pred):
             pred_mask = np.zeros((pred.shape))
             pred_mask[pred == sem] = 1.0
